@@ -1,0 +1,43 @@
+<html>
+<head>
+</head>
+<body>
+<form action="/registerAuthCust" method="POST">
+	<h1>Customer Registration</h1>
+	<h2>Login Information</h2>
+	Email: <br>
+	<input type="text" name = "email" placeholder="Email Address" required> <br>
+	Password: <br>
+	<input type="password" name="password" id="custpassword" placeholder="Password" required> <br>
+
+	<h2>Customer Information</h2>
+	Name: <br>
+	<input type="text" name = "fname" placeholder="First Name" required> 
+	<input type="text" name = "lname" placeholder="Last Name" required> <br>
+
+	Address: <br>
+	<input type="text" name = "stNum" placeholder="Street #" required>
+	<input type="text" name = "stName" placeholder="StreetName" required> <br>
+	<input type="text" name = city placeholder="City" required>
+	<input type="text" name = state placeholder="State" required>
+	<input type="text" name = zip placeholder="Zip" required> <br> 
+
+	Date Of Birth: <br> <input type="date" name="dob" placeholder="YYYY-MM-DD"> <br>
+	<div id = passportInfo>
+		<h2>Passport Information: </h2>
+		Passport Number: <input type="text" name="passportNum" placeholder="Passport #"> <br>
+		Passport Expiration Date: <input type="date" name="passportExpDate" placeholder="YYYY-MM-DD">
+		Passport Country: <input type="text" name="country" placeholder="Country">
+	</div>
+	<br>
+
+	<input type="submit" value = Register />
+	<br>
+	<a href="/staffregister">StaffLogin</a>
+	{% if error %}
+		<p class="error"><strong>Error:</strong> {{error}}</p>
+	{% endif %}
+</form>
+<a href="/">Go back</a>
+</body>
+</html>

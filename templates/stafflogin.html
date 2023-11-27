@@ -1,0 +1,29 @@
+<html>
+<head>
+	<title>Login Form</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+	<div class = 'login'>
+<form action="/loginAuthStaff" method="POST">
+        Email:
+		<input type="text" name="username" placeholder="Enter your username" id="usernameInput" required> <br>
+	    Password:
+		<input type="password" name="password" placeholder="Enter your password" required><br>
+	
+	<input type="submit" value = Login />
+	
+	<script src="{{ url_for('static', filename='script.js') }}"></script>
+	{% if error %}
+		<p class="error"><strong>Error:</strong> {{error}}</p>
+	{% endif %}
+	<a href="/login" >Customer Login</a>
+</form>
+
+<a href="/">Go back</a>
+</div>
+</body>
+
+</html>
+
+

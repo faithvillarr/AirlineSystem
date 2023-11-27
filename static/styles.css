@@ -1,0 +1,45 @@
+/* Header styles */
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Logo styles */
+.logo {
+    width: 12.5vw; /* 1/8 of the viewport width */
+    max-width: 80px; /* Set a maximum width to prevent the logo from becoming too large */
+    height: auto;
+    margin-right: 10px; /* Add margin between logo and buttons */
+}
+
+/* User profile styles */
+.userprofile {
+    width: 12.5vw; /* 1/8 of the viewport width */
+    max-width: 50px; /* Set a maximum width to prevent the logo from becoming too large */
+    height: auto;
+    margin-right: 10px; /* Add margin between logo and buttons */
+}
+
+/* Button styles */
+.header-button {
+    background-color: #fff;
+    color: #333;
+    padding: 10px 20px; /* Adjust padding for more space around the text */
+    text-decoration: none;
+    border-radius: 5px;
+    margin-right: 10px; /* Add margin between buttons */
+}
+
+/* Align both buttons to the right */
+.header-buttons-container {
+    margin-left: auto;
+    display: flex;
+}
+
+.login {
+    align-items: center;
+}

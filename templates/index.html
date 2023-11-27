@@ -1,0 +1,50 @@
+<!--mine-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airport System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+{% if not message %}
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+
+        <div class="header-buttons-container">
+            <a href="/login" class="header-button">Login</a>
+            <a href="/custregister" class="header-button">Register</a>
+        </div>
+        <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+    </header>
+{% endif %}
+
+
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
+
+<table>
+    <th>Flight #</th>
+    <th>Departue Data</th>
+
+    {% for flight in flights %}
+        <tr>
+            <td>{{ flight['flightNum'] }}</td>
+            <td>{{ flight['deptDate'] }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+
+
+</table>
+
+</body>
+
+</html>
