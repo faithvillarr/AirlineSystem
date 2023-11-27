@@ -75,6 +75,7 @@ def loginAuthCust():
 		#creates a session for the the user
 		#session is a built in
 		session['username'] = username
+		session['usertype'] = 'customer'
 		return redirect(url_for('home'))
 	else:
 		#returns an error message to the html page
@@ -102,6 +103,7 @@ def loginAuthStaff():
 		#creates a session for the the user
 		#session is a built in
 		session['username'] = username
+		session['usertype'] = 'staff'
 		return redirect(url_for('home'))
 	else:
 		#returns an error message to the html page
@@ -113,14 +115,26 @@ def loginAuthStaff():
 @app.route('/registerAuthCust', methods=['GET', 'POST'])
 def registerAuthCust(): #!!!!!!!!	START WORKING HERE !!!!!!!!!!!!!!! need to copy and aug for staff login
 	#grabs information from the forms
-	username = request.form['username']
+	username = request.form['email']
 	password = request.form['password']
+	fname = request.form['fname']
+	lname = request.form['lname']
+	phoneNum = request.form['phoneNum']
+	stNum =  request.form['stNum']
+	stName =  request.form['stName']
+	city = request.form['city']
+	state = request.form['state']
+	zip_code =  request.form['zip']
+	dob =  request.form['dob']
+	passportNum = request.form['passportNum']
+	ppExpDate =  request.form['passportExpDate']
+
 
 	#cursor used to send queries
 	cursor = conn.cursor()
 	#executes query
-	query = 'SELECT * FROM user WHERE username = %s'
-	cursor.execute(query, (username))
+	query = 'SELECT * FROM customer WHERE emailAdd = %s'
+	cursor.execute(query, username)
 	#stores the results in a variable
 	data = cursor.fetchone()
 	#use fetchall() if you are expecting more than 1 data row
@@ -130,12 +144,63 @@ def registerAuthCust(): #!!!!!!!!	START WORKING HERE !!!!!!!!!!!!!!! need to cop
 		error = "This user already exists"
 		return render_template('custregister.html', error = error)
 	else:
-		# !!! will need more robust registration information
-		ins = 'INSERT INTO user VALUES(%s, %s)'
-		cursor.execute(ins, (username, password))
+		# Insert user information into the customer table
+		ins_customer = 'INSERT INTO customer VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+		cursor.execute(ins_customer, (username, fname, lname, password, stNum, stName, None, city, state, zip_code, passportNum, dob, 'United States', ppExpDate))
+
+		# Insert phone number into the custphoneinst table
+		ins_phone = 'INSERT INTO custphoneinst VALUES (%s, %s)'
+		cursor.execute(ins_phone, (username, phoneNum))
 		conn.commit()
 		cursor.close()
-		return render_template('index.html')
+		session['username'] = username
+		session['usertype'] = 'customer'
+		return render_template('home.html')
+	
+#Authenticates the register
+@app.route('/registerAStaff', methods=['GET','POST'])
+def registerAStaff(): 
+    username = request.form['username']
+    password = request.form['password']
+    fname = request.form['fname']
+    lname = request.form['lname']
+    dob = request.form['dob']
+    company = request.form['company']
+    email = request.form['email']
+    phoneNum = request.form['phoneNum']
+
+    cursor = conn.cursor()
+    query = 'SELECT * FROM airlineStaff WHERE username = %s'
+    cursor.execute(query, username)
+    data = cursor.fetchone()
+    error = None
+
+    if data:
+        error = "This user already exists"
+        return render_template('staffregister.html', error=error)
+    else:
+		#add someway to test if airline exists
+        ins_staff = 'INSERT INTO airlinestaff VALUES (%s, %s, %s, %s, %s)'
+        cursor.execute(ins_staff, (username, password, fname, lname, dob))
+
+        ins_works_for = 'INSERT INTO worksFor VALUES (%s, %s)'
+        cursor.execute(ins_works_for, (username, company))
+
+        ins_email = 'INSERT INTO staffemailinst VALUES (%s, %s)'
+        cursor.execute(ins_email, (username, email))
+
+        ins_phone = 'INSERT INTO staffphoneinst VALUES (%s, %s)'
+        cursor.execute(ins_phone, (username, phoneNum))
+
+        conn.commit()
+        cursor.close()
+        
+        session['username'] = username
+        session['usertype'] = 'staff'
+        return render_template('home.html')  # You may want to redirect to a different page for staff members
+
+
+
 
 @app.route('/home')
 def home():
@@ -149,21 +214,10 @@ def home():
     #cursor.close()
     return render_template('home.html', username=username)#, posts=data1)
 
-		
-#@app.route('/post', methods=['GET', 'POST'])
-#def post():
-#	username = session['username']
-#	cursor = conn.cursor();
-#	blog = request.form['blog']
-#	query = 'INSERT INTO blog (blog_post, username) VALUES(%s, %s)'
-#	cursor.execute(query, (blog, username))
-#	conn.commit()
-#	cursor.close()
-#	return redirect(url_for('home'))
-
 @app.route('/logout')
 def logout():
 	session.pop('username')
+	session.pop('usertype')
 	return redirect('/')
 		
 app.secret_key = 'some key that you will never guess'
