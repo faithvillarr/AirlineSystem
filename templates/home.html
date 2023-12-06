@@ -1,14 +1,131 @@
 <html>
-<head>
-	<header id = 'header'> </header>
-</head>
-<body>
+    <head>
+        <title>Home Page</title>
+        <header id = 'header'> </header>
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    </head>
+    <body>
+        {% if not message %}
+        <header>
+            <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+            
+            <!-- BASIC HOMEPAGE-->
+            {% if session['usertype'] != 'null' %}
+            <div class = 'headertext'>Welcome {{session['username']}}!</div>
+            <a href="/home">
+                <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+            </a>        
+            {% endif %}
+            
+            <!-- HEADER FOR USERS-->
+            {% if session['usertype'] == 'null' %}
+            <div class="header-buttons-container">
+                <a href="/login" class="header-button">Login</a>
+                <a href="/custregister" class="header-button">Register</a>
+            </div>
+            {% endif %}
+        </header>
 
-	<h1>Welcome {{username}}</h1>
+        {% if session['usertype'] == 'customer' %}
+        <div class = 'flight-table' id = "myflights">
+        <h3>Upcoming Flights</h3>
+        <table id = 'flightTable'>
+            <th>Flight #</th>
+            <th>Departure Airport</th>
+            <th>Departue Date</th>
+            <th>Departure Time</th>
+            <th>Arrival Airport</th>
+            <th>Arrival Date</th>
+            <th>Arrival Time</th>
+            <th>Status</th>
+        {% for flight in upcflights %}
+        <tr>
+            <td>{{ flight['flightNum'] }}</td>
+            <td>{{ flight['deptAirportCode'] }}</td>
+            <td>{{ flight['deptDate'] }}</td>
+            <td>{{ flight['deptTime'] }}</td>
+            <td>{{ flight['arrAirportCode'] }}</td>
+            <td>{{ flight['arrDate'] }}</td>
+            <td>{{ flight['arrTime'] }}</td>
+            <td>{{ flight['status'] }}</td>
+            <td>{{ flight['baseTicketPrice'] }}</td>
+            <td> 
+                <form action="/cancelflight" method="GET">
+                    <input type="submit" value="View Details">
+                </form>
+            </td>
+
+        </tr>
+        {% endfor %}
+            
+        </table>  
+        </table> 
+    </div>
+
+    <div class = 'flight-table' id = "past">
+        <h3>Past Flights</h3> Leave a review!
+        <table id = 'flightTable'>
+            <th>Flight #</th>
+            <th>Departure Airport</th>
+            <th>Departue Date</th>
+            <th>Departure Time</th>
+            <th>Arrival Date</th>
+            <th>Arrival Time</th>
+            <th>Arrival Airport</th>
+            <th>Status</th>
+        {% for flight in pastflights %}
+        <tr>
+            <td>{{ flight['flightNum'] }}</td>
+            <td>{{ flight['deptAirportCode'] }}</td>
+            <td>{{ flight['deptDate'] }}</td>
+            <td>{{ flight['deptTime'] }}</td>
+            <td>{{ flight['arrAirportCode'] }}</td>
+            <td>{{ flight['arrDate'] }}</td>
+            <td>{{ flight['arrTime'] }}</td>
+            <td>{{ flight['status'] }}</td>
+            <td>{{ flight['baseTicketPrice'] }}</td>
+            <td> 
+                <form action="/flightdetails" method="GET">
+                    <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
+                    <input type="submit" value="View Details">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </table>  
+        
+    </div>
+</section>
+    <aside>
+        <div id = 'user-spending'>
+            <h3>Total Spending in 2023</h3>
+            ${{totalspent['sum(pricePaid)']}}
+            
+        </div>
+        <div id = 'user options'>
+            <a href="/userinfo">User Information</a>
+            <a href="/cancel-flight">Cancel Flight</a>
+            <a href="/index">Purchase Flights</a>
+        </div>
+    </aside>
+        
+
+        {% endif %}
+
+        
+	{% endif %}
+
 <!--<form action="/post" method="POST"></form>-->
 
+<!-- Customer Account Page-->
+{% if session['usertype'] == 'customer'%}
 
 
+
+{%endif%}
+
+
+<a href="/">Go back</a>
 <a href="/logout">Logout</a>
 
 </body>

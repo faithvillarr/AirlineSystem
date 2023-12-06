@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+        
+        <!-- BASIC HOMEPAGE-->
+        {% if session['usertype'] != 'null' %}
+        <div class = 'headertext'>Welcome {{session['username']}}!</div>
+        <a href="/home">
+            <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+        </a>        
+        {% endif %}
+        
+        <!-- HEADER FOR USERS-->
+        {% if session['usertype'] == 'null' %}
+        <div class="header-buttons-container">
+            <a href="/login" class="header-button">Login</a>
+            <a href="/custregister" class="header-button">Register</a>
+        </div>
+        {% endif %}
+    </header>
+    {% if message %}
+        {{ message }}
+    {% endif %}
+
+    <h1>User Information</h1>
+    Email: {{data['emailAdd']}} <br>
+    Name: {{data['firstName']}} {{data['lastName']}} <br>
+    Address: {{data['buildNum']}} {{data['streetName']}} {{data['aptNum']}} <br>
+             {{data['city']}}, {{data['state']}} {{data['zip']}}
+             <br>
+    Phone Numbers:
+    <table>
+        <tr>
+            <th>Phone Numbers</th>
+        </tr>
+        {% for num in phoneNum %}
+            <tr>
+                {% if num['phoneNum'] %}
+                    <td>+{{ num['phoneNum'][0] }} ({{ num['phoneNum'][1:4] }}) {{ num['phoneNum'][4:7] }}-{{ num['phoneNum'][7:] }}</td>m
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <form action="/addCustPhoneNum" method="POST">
+        Add Phone Number:
+	<input type="text" name="phoneNum" placeholder="###-###-####"> 
+    <input type="submit" value = "Enter"/>
+    </form>
+
+    <h3>Passport Information</h3><br>
+    Passport Number{{data['passportNum']}}
+
+
+
+
+
+</body>
+</html>

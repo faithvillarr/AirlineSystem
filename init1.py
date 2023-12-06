@@ -5,6 +5,8 @@ import pymysql.cursors
 #Initialize the app from Flask
 app = Flask(__name__)
 
+flight_number = ''
+
 #Configure MySQL
 conn = pymysql.connect(host='localhost',
                        user='root',
@@ -18,7 +20,10 @@ conn = pymysql.connect(host='localhost',
 def hello():
     cursor = conn.cursor()
     # executes query
-    query = 'SELECT * FROM `flights` WHERE deptDate >= CURRENT_DATE'
+    if 'usertype' not in session:
+        session['usertype'] = 'null'
+    print("Usertype: ",session['usertype'])
+    query = 'SELECT * FROM `flights` WHERE deptDate >= CURRENT_DATE ORDER BY deptDate ASC'
     cursor.execute(query)
 
     # stores the results in a variable
@@ -199,26 +204,101 @@ def registerAStaff():
         session['usertype'] = 'staff'
         return render_template('home.html')  # You may want to redirect to a different page for staff members
 
+#! My app routes!!
+@app.route('/searchflight', methods=['GET','POST'])
+def searchFlights():
+	print("flag",request.form)
+	deptapt = request.form['deptapt']
+	deptdate = request.form['deptdate']
+	arrapt = request.form['arrapt']
+	arrdate = request.form['arrdate']
 
+	cursor = conn.cursor()
+	query = 'SELECT * FROM flights WHERE deptDate = %s and deptAirportCode = %s and arrDate = %s and arrAirportCode = %s'
+	cursor.execute(query, (deptdate, deptapt, arrdate, arrapt))
+	data3 = cursor.fetchall()
+	cursor.close()
+	error = None
+	return render_template('index.html', flights = data3)
 
+@app.route('/flightdetails', methods = ['GET', 'POST'])
+def flightDetails(): # <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
+	flight_number = request.args.get('flight_num')
+	print(request.args.get('flight_num'))
+	#username = session['username']
+	#usertype = session['usertype']
+
+	cursor = conn.cursor()
+	query = 'SELECT * FROM flights WHERE flightNum = %s'
+	cursor.execute(query, (flight_number,))
+	myflight = cursor.fetchone()
+	print("My Flight: ",myflight)
+	cursor.close();
+	return render_template('flightdetails.html', flight = myflight) #, username = username), usertype = usertype)
 
 @app.route('/home')
 def home():
     username = session['username']
-    #cursor = conn.cursor();
-    #query = 'SELECT ts, blog_post FROM blog WHERE username = %s ORDER BY ts DESC'
-    #cursor.execute(query, (username))
-    #data1 = cursor.fetchall() 
-    #for each in data1:
-    #    print(each['blog_post'])
-    #cursor.close()
-    return render_template('home.html', username=username)#, posts=data1)
+    if(session['usertype'] == 'customer'):
+        cursor = conn.cursor();
+
+		#past flights
+        pastquery = 'SELECT flights.flightNum, flights.deptAirportCode, flights.deptDate, flights.deptTime, flights.arrAirportCode, flights.arrDate, flights.arrTime, flights.fstatus, flights.baseTicketPrice FROM flights INNER JOIN ticket ON ticket.flightNum = flights.flightNum WHERE ticket.emailAdd = %s AND flights.deptDate < CURRENT_DATE;'
+        cursor.execute(pastquery, (username))
+        pastflights = cursor.fetchall() 
+        print("Past Flights:\n")
+        # for i in pastflights:
+        #     print(i)
+
+		#future flights
+        futurequery = 'SELECT flights.flightNum, flights.deptAirportCode, flights.deptDate, flights.deptTime, flights.arrAirportCode, flights.arrDate, flights.arrTime, flights.fstatus, flights.baseTicketPrice FROM flights INNER JOIN ticket ON ticket.flightNum = flights.flightNum WHERE ticket.emailAdd = %s AND flights.deptDate >= CURRENT_DATE;'
+        cursor.execute(futurequery, (username))
+        upcflights = cursor.fetchall() 
+
+        spendingquery = 'SELECT sum(pricePaid) from purchased where emailAdd = %s'
+        cursor.execute(spendingquery, (username))
+        totalspent = cursor.fetchone();
+        cursor.close()
+        return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
+        # for i in upcflights:
+        #     print(i)
+
+    if(session['usertype'] == 'staff'):
+        print('staff')		
+    return render_template('home.html',)#, posts=data1)
 
 @app.route('/logout')
 def logout():
 	session.pop('username')
 	session.pop('usertype')
+	session['usertype'] = 'null'
 	return redirect('/')
+
+@app.route('/userinfo')
+def userinfo():
+	cursor = conn.cursor();
+	query = 'SELECT * FROM  customer WHERE emailAdd = %s'
+	cursor.execute(query, (session['username']))
+	udata = cursor.fetchone();
+	query = 'SELECT phoneNum FROM custPhoneInst WHERE emailAdd = %s'
+	cursor.execute(query, (session['username']))
+	pdata = cursor.fetchall();
+	for i in pdata:
+		print(i)
+	return render_template('userinfo.html', data = udata, phoneNum = pdata)
+
+@app.route('/addCustPhoneNum', methods=['GET','POST'])
+def addCustPhoneNum():
+	cursor = conn.cursor();
+	newNum = request.form['phoneNum']
+	if len(newNum) > 11 or len(newNum) < 9:
+		message = 'Improperly formatted phone number.'
+		return redirect(url_for('userinfo'))
+	query = 'INSERT INTO custphoneinst (emailAdd, phoneNum) VALUES (%s, %s)'
+	cursor.execute(query, (session['username'], newNum))
+	cursor.close()
+	return redirect(url_for('userinfo'))
+
 		
 app.secret_key = 'some key that you will never guess'
 #Run the app on localhost port 5000

@@ -12,15 +12,39 @@
 <body>
 {% if not message %}
     <header>
+        <a href="/">
         <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+        </a>
 
+        {% if session['usertype'] != 'null' %}
+            <div class = 'headertext'>Welcome {{session['username']}}!</div>
+            <a href="/home">
+                <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+            </a>        
+        {% endif %}
+        {% if session['usertype'] == 'null' %}
         <div class="header-buttons-container">
             <a href="/login" class="header-button">Login</a>
             <a href="/custregister" class="header-button">Register</a>
         </div>
-        <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+        {% endif %}
+        
+        
     </header>
 {% endif %}
+
+<div id = 'searchForm'>
+    <form action="/searchflight" method="POST">
+        <!-- Search for flights: Search for future flights (one way or round trip) based on source city/airport name,
+        destination city/airport name, dates (departure or return). -->
+        <input type="text" name="deptapt" placeholder="Departure Airport">
+        <input type="date" name="deptdate" placeholder="Departure Date"> <br>
+        <input type="text" name="arrapt" placeholder="Arrival Airport">
+        <input type="date" name="arrdate" placeholder="Arrival Date"> <br>
+
+        <input type="submit" value='Search for flights' />
+    </form>
+</div>
 
 
 <style type="text/css">
@@ -29,21 +53,42 @@
 	}
 </style>
 
-<table>
-    <th>Flight #</th>
-    <th>Departue Data</th>
+<div id = 'flightTable'>
+    <table>
+        <th>Flight #</th>
+        <th>Departue Date</th>
+        <th>Departure Time</th>
+        <th>Departure Airport</th>
+        <th>Arrival Date</th>
+        <th>Arrival Time</th>
+        <th>Arrival Airport</th>
+        <th>Status</th>
+        <th>Price</th>
 
-    {% for flight in flights %}
-        <tr>
-            <td>{{ flight['flightNum'] }}</td>
-            <td>{{ flight['deptDate'] }}</td>
-        </tr>
-    {% endfor %}
+        {% for flight in flights %}
+            <tr>
+                <td>{{ flight['flightNum'] }}</td>
+                <td>{{ flight['deptDate'] }}</td>
+                <td>{{ flight['deptTime'] }}</td>
+                <td>{{ flight['deptAirportCode'] }}</td>
+                <td>{{ flight['arrDate'] }}</td>
+                <td>{{ flight['arrTime'] }}</td>
+                <td>{{ flight['arrAirportCode'] }}</td>
+                <td>{{ flight['status'] }}</td>
+                <td>{{ flight['baseTicketPrice'] }}</td>
+                <td> 
+                    <form action="/flightdetails" method="GET">
+                        <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
+                        <input type="submit" value="View Details">
+                    </form>
+                </td>
+
+            </tr>
+        {% endfor %}
+    </table>
+</div>
 </table>
-
-
-
-</table>
+<a href="/logout">Logout</a>
 
 </body>
 
