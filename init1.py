@@ -1,6 +1,6 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect
-import pymysql.cursors
+import pymysql.cursors, json
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -298,6 +298,35 @@ def addCustPhoneNum():
 	cursor.execute(query, (session['username'], newNum))
 	cursor.close()
 	return redirect(url_for('userinfo'))
+
+@app.route('/write-review', methods = ['GET','POST'])
+def writeReview():
+	cursor = conn.cursor();
+	flight_num = request.form['flight_num']
+	query = 'SELECT * FROM flights WHERE flightNum = %s'
+	cursor.execute(query, (flight_num))
+	flight = cursor.fetchone();
+	print("flight: ", flight)
+	#check if a review already exists. 	
+		#if yes -> edit review
+		#else -> write new review
+	return render_template('writereview.html', flight = flight)
+
+@app.route('/writing', methods = ['POST'])
+def writingReview():
+	cursor = conn.cursor()
+	if(session['usertype'] == 'customer'):
+		flight_num = request.form.get('flight_num')
+		dept_date = request.form['depdt']
+		dept_time = request.form['deptm']
+		email_add = session['username']
+		rating = request.form['rating']
+		comments = request.form['comments']
+		query = 'INSERT INTO took (flightNum, deptDate, deptTime, emailAdd, rating, comments) VALUES (%s, %s, %s, %s, %s, %s)'
+		cursor.execute(query, (flight_num, dept_date, dept_time, email_add, rating, comments))
+		conn.commit()
+	cursor.close()
+	return redirect(url_for('home'))
 
 		
 app.secret_key = 'some key that you will never guess'

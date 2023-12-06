@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <style>    
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+    
+        h1, h2 {
+            text-align: center;
+        }
+    
+        form {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+        }
+    
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 0 auto; 
+            display: block;
+        }
+
+        input[type="radio"] {
+            margin-bottom: 16px;
+        }
+
+        #flightinfo{
+            text-align: center;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        }
+        .rating-label {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .rating-select {
+            padding: 8px;
+            font-size: 18px;
+            color: #333;
+        }
+        #comments {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            margin-bottom: 16px;
+        }        
+    </style>
+    <title>Write Review</title>
+</head>
+<body>
+    <header>
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+        </a>
+        <!-- BASIC HOMEPAGE-->
+        {% if session['usertype'] != 'null' %}
+        <div class = 'headertext'>Welcome {{session['username']}}!</div>
+        <a href="/home">
+            <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+        </a>        
+        {% endif %}
+        <!-- HEADER FOR USERS-->
+        {% if session['usertype'] == 'null' %}
+        <div class="header-buttons-container">
+            <a href="/login" class="header-button">Login</a>
+            <a href="/custregister" class="header-button">Register</a>
+        </div>
+        {% endif %}
+    </header>
+
+    <form action="/writing" id="flightRatingForm" method="POST">
+        <h2>Flight {{ flight['flightNum'] }}</h2> 
+        <div id = "flightinfo">
+            {{ flight['deptAirportCode'] or 'N/A' }} -> {{ flight['arrAirportCode'] }} <br>
+            {{ flight['deptDate'] }} - {{ flight['arrDate'] }}
+        </div>
+        <br>
+
+        <label class="rating-label" for="rating">Rating:</label>
+        <select id="rating" name="rating" class="rating-select">
+            <option value="1">&#9733;</option>
+            <option value="2">&#9733;&#9733;</option>
+            <option value="3">&#9733;&#9733;&#9733;</option>
+            <option value="4">&#9733;&#9733;&#9733;&#9733;</option>
+            <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733;</option>
+        </select>
+        <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
+        <input type="hidden" name="depdt" value="{{ flight['deptDate'] }}">
+        <input type="hidden" name="deptm" value="{{ flight['deptTime'] }}">
+        <label for="comments">Comments:</label>
+        <textarea id="comments" name="comments" rows="4"></textarea>
+
+        <button type="submit">Submit Rating</button>
+    </form>
+    
+</body>
+</html>

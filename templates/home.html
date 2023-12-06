@@ -7,8 +7,9 @@
     <body>
         {% if not message %}
         <header>
-            <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
-            
+            <a href="/">
+                <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+            </a>
             <!-- BASIC HOMEPAGE-->
             {% if session['usertype'] != 'null' %}
             <div class = 'headertext'>Welcome {{session['username']}}!</div>
@@ -16,7 +17,6 @@
                 <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
             </a>        
             {% endif %}
-            
             <!-- HEADER FOR USERS-->
             {% if session['usertype'] == 'null' %}
             <div class="header-buttons-container">
@@ -83,11 +83,10 @@
             <td>{{ flight['arrDate'] }}</td>
             <td>{{ flight['arrTime'] }}</td>
             <td>{{ flight['status'] }}</td>
-            <td>{{ flight['baseTicketPrice'] }}</td>
             <td> 
-                <form action="/flightdetails" method="GET">
+                <form action="/write-review" method="POST">
                     <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
-                    <input type="submit" value="View Details">
+                    <input type="submit" value="Write review">
                 </form>
             </td>
         </tr>
