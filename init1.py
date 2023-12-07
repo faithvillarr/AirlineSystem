@@ -1,6 +1,7 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect
 import pymysql.cursors, json
+from datetime import datetime
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -109,7 +110,7 @@ def loginAuthStaff():
 		#session is a built in
 		session['username'] = username
 		session['usertype'] = 'staff'
-		return redirect(url_for('home'))
+		return render_template('home.html')
 	else:
 		#returns an error message to the html page
 		error = 'Invalid login or username'
@@ -207,9 +208,15 @@ def registerAStaff():
 #! My app routes!!
 @app.route('/searchflight', methods=['GET','POST'])
 def searchFlights():
-	print("flag",request.form)
 	deptapt = request.form['deptapt']
 	deptdate = request.form['deptdate']
+	deptdate = datetime.strptime(deptdate, '%Y-%m-%d').date()
+
+	if(session['usertype'] != 'staff'):
+		current_date = datetime.now().date()
+		if deptdate < current_date:
+			message = "invalid departure date"
+			return render_template('index.html', message = message)
 	arrapt = request.form['arrapt']
 	arrdate = request.form['arrdate']
 
@@ -286,7 +293,20 @@ def logout():
 
 @app.route('/userinfo')
 def userinfo():
+	print("routed to user info")
 	cursor = conn.cursor();
+	if(session['usertype'] == 'staff'):
+		user_query = 'SELECT * FROM airlinestaff WHERE username = %s'
+		phone_query = 'SELECT phoneNumber FROM staffphoneinst WHERE username = %s'
+		email_query = 'SELECT emailAdd FROM staffemailinst WHERE username = %s'
+		cursor.execute(user_query, (session['username']))
+		idata = cursor.fetchone();
+		cursor.execute(phone_query, (session['username']))
+		pdata = cursor.fetchall();
+		cursor.execute(email_query, (session['username']))
+		edata = cursor.fetchall();
+		print(edata, pdata, idata)
+		return render_template('userinfo.html', userinfo = idata, phoneNums = pdata, emails = edata)
 	query = 'SELECT * FROM  customer WHERE emailAdd = %s'
 	cursor.execute(query, (session['username']))
 	udata = cursor.fetchone();
@@ -306,8 +326,33 @@ def addCustPhoneNum():
 		return redirect(url_for('userinfo'))
 	query = 'INSERT INTO custphoneinst (emailAdd, phoneNum) VALUES (%s, %s)'
 	cursor.execute(query, (session['username'], newNum))
+	conn.commit()
 	cursor.close()
 	return redirect(url_for('userinfo'))
+
+@app.route('/addStaffEmail', methods=['GET','POST'])
+def addStaffEmail():
+	cursor = conn.cursor();
+	newEmail = request.form['Email']
+	query = 'INSERT INTO staffemailinst (username, emailAdd) VALUES (%s, %s)'
+	cursor.execute(query, (session['username'], newEmail))
+	conn.commit()
+	cursor.close()
+	return redirect(url_for('userinfo'))
+
+@app.route('/addStaffPhoneNum', methods=['POST'])
+def addStaffPhoneNum():
+	cursor = conn.cursor();
+	newNum = request.form['phoneNum']
+	#if len(newNum) > 11 or len(newNum) < 9:
+	#	message = 'Improperly formatted phone number.'
+	#	return redirect(url_for('userinfo'))
+	query = 'INSERT INTO staffphoneinst (username, phoneNumber) VALUES (%s, %s)'
+	cursor.execute(query, (session['username'], newNum))
+	conn.commit()
+	cursor.close()
+	return redirect(url_for('userinfo'))
+
 
 @app.route('/write-review', methods = ['GET','POST'])
 def writeReview():
@@ -371,7 +416,7 @@ def addFlight():
 @app.route('/addFlightAuth', methods = ['POST'])
 def addFlightA():
 	#!TODO: insert a check for maintenence and pre-existence
-	print("Flga")
+	print("Flag")
 	flightNum = request.form['flightNum']
 	deptAirportCode = request.form['deptAirportCode']
 	deptDate = request.form['deptDate']
@@ -557,8 +602,8 @@ def addAirportA():
 	cursor = conn.cursor()
 	query = 'SELECT * FROM airport WHERE airportCode = %s'
 	cursor.execute(query, airportCode)
-	if(cursor.fetchone() != 'None'):
-		message = "Flight already exists"
+	if(cursor.fetchone()):
+		message = "Airport already exists"
 		return render_template('addAirport.html', message = message)
 		
 	ins_airplane = 'INSERT INTO airport VALUES(%s, %s, %s, %s, %s, %s)'
@@ -571,12 +616,31 @@ def addAirportA():
 #ADDING STATUS'
 @app.route('/addStatus', methods = ['GET'])
 def addStatus():
-	return render_template('addStatus.html')
-@app.route('/addStatusAuth')
+	flight_query = '''SELECT uses.flightNum FROM uses 
+	JOIN flights ON uses.flightNum = flights.flightNum 
+	WHERE uses.name IN 
+	(SELECT airlineName FROM worksfor 
+	WHERE username = %s); '''
+	cursor = conn.cursor()
+	cursor.execute(flight_query, (session['username']))
+	flights = cursor.fetchall()
+	print(flights)
+	return render_template('addStatus.html', flights = flights)
+@app.route('/addStatusAuth', methods = ['POST'])
 def addStatusA():
-	message = "Flight sucessfully added"
+	flightNum = request.form['flightNum']
+	status = request.form['fstatus']
+	alter_s = 'UPDATE flights SET fstatus = %s WHERE flightNum = %s'
+	cursor = conn.cursor()
+	cursor.execute(alter_s, (status, flightNum))
+	conn.commit()
+	cursor.close()
+	message = "Status Updated"
 	return render_template('addStatus.html', message = message)
 
+@app.route('/cancelflight')
+def cancelFlight():
+	return render_template('/home')
 
 		
 app.secret_key = 'some key that you will never guess'

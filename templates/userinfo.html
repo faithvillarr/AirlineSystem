@@ -16,6 +16,7 @@
         <div class = 'headertext'>Welcome {{session['username']}}!</div>
         <a href="/home">
             <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+             
         </a>        
         {% endif %}
         
@@ -27,6 +28,9 @@
         </div>
         {% endif %}
     </header>
+    
+
+    {% if session['usertype'] == 'customer' %}
     {% if message %}
         {{ message }}
     {% endif %}
@@ -59,6 +63,68 @@
 
     <h3>Passport Information</h3><br>
     Passport Number{{data['passportNum']}}
+    {%endif%}
+
+
+    {% if session['usertype'] == 'staff' %}
+    {% if message %}
+        {{ message }}
+    {% endif %}
+
+    <!--
+        add more than one phone # and email (20m)
+    -->
+        
+    <h1>User Information</h1>
+    Name: {{userinfo['fname']}} {{userinfo['lname']}} <br>
+    <br>
+
+    Phone Numbers:
+    <table>
+        <tr>
+            <th>Phone Numbers</th>
+        </tr>
+        {% for num in phoneNums %}
+            <tr>
+                {% if num['phoneNumber'] %}
+                    <td>{{num['phoneNumber']}}</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <form action="/addStaffPhoneNum" method="POST"> !!!!
+        Add Phone Number:
+        <input type="text" name="phoneNum" placeholder="###-###-####"> 
+        <input type="submit" value = "Enter"/>
+    </form>
+
+    Emails:
+    <table>
+        <tr>
+            <th>Emails</th>
+        </tr>
+        {% for email in emails %}
+            <tr>
+                {% if email['emailAdd'] %}
+                    <td>{{email['emailAdd']}}</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <form action="/addStaffEmail" method="POST"> !!!!
+        Add Email Address:
+        <input type="text" name="Email" placeholder="Enter new email"> 
+        <input type="submit" value = "Enter"/>
+    </form>
+    
+        
+    <a href="/home">Go back</a>
+
+
+    {% endif %}
+
 
 
 

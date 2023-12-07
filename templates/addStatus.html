@@ -1,19 +1,107 @@
+
+
 <!DOCTYPE html>
-<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
+    <title>Change Flight Status</title>
+    <style>
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+    
+        h1, h2 {
+            text-align: center;
+        }
+    
+        form {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+        }
+    
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 0 auto; 
+            display: block;
+        }
 
-    <label>Status:</label>
-    <select name="fstatus" required>
-        <option value="on-time">On-Time</option>
-        <option value="delayed">Delayed</option>
-        <option value="cancelled">Cancelled</option>
-    </select> <br>
+        input[type="radio"] {
+            margin-bottom: 16px;
+        }
+        
+    </style>
+
+</head>
+
+<body>
+    <header>
+        <h1>Change Flight Status</h1>
+    </header>
+
     
+    <main>
+        {% if message %}
+        {{ message }}
+        {% endif %} 
+        <form action="/addStatusAuth" method="POST">
+            <label for="flightNum">Flight Number:</label>
+            <select id="flightNum" name="flightNum" required>
+                {% for flight in flights %}
+                    <option value="{{ flight['flightNum'] }}">{{ flight['flightNum'] }}</option>
+                {% endfor %}
+            </select>
+
+
+            <label>Status:</label>
+            <select name="fstatus" required>
+                <option value="on-time">On-Time</option>
+                <option value="delayed">Delayed</option>
+                <option value="cancelled">Cancelled</option>
+            </select> <br>
+            
+
+            <button type="submit">Submit Change</button>
+        </form>
+    </main>
+
+    <br>
+    <h2><a href="/"> Go back</a></h2>
+
 </body>
 </html>
+

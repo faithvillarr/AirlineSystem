@@ -10,7 +10,7 @@
 </head>
 
 <body>
-{% if not message %}
+
     <header>
         <a href="/">
         <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
@@ -31,7 +31,10 @@
         
         
     </header>
-{% endif %}
+    {% if  message %}
+    {{message}}
+    {% endif %}
+
 
 <div id = 'searchForm'>
     <form action="/searchflight" method="POST">
