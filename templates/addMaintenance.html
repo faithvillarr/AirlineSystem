@@ -84,12 +84,15 @@
     </header>
 
     <main>
+        {%if message%}
+         {{ message }}
+        {%endif%}
 
-        <form action="/addAirplaneAuth" method="POST">
-            <label for ="flightID">Flight:</label>
-            <select name="flightID" required>
-                {% for flight in flights %}
-                    <option value="{{ flight['flightNum'] }}">{{ flight['flightNum'] }}: {{ flight['deptAirportCode'] }} &larr; {{ flight['arrAirportCode'] }} </option>
+        <form action="/addMaintenanceAuth" method="POST">
+            <label for ="planeID">Plane:</label>
+            <select name="planeID" required>
+                {% for plane in planes %}
+                    <option value="{{ plane['planeID'] }}">{{ plane['planeID'] }}</option>
                 {% endfor %}
             </select> <br>
 
@@ -98,12 +101,13 @@
             <label for="startDate">Start Date: </label>
             <input type="date" name="startDate">
             <label for="startTime">Start Time:</label>
-            <input type="date" name="startTime"> <br>
+            <input type="time" name="startTime"> <br>
             <label for="endDate">End Date:</label>
             <input type="date" name="endDate">
             <label for="endTime">End Time:</label>
-            <input type="date" name="endTime"> <br>
+            <input type="time" name="endTime"> <br>
 
+            <input type="hidden" name="airline" value= "{{airline}}">
             <button type="submit">Register</button>
         </form>
     </main>

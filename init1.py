@@ -391,7 +391,38 @@ def addFlightA():
 	#print(airline)
 	#print('success\n')
 
-	#!TODO: Check (1) if flight already exists and (2)if plane is already being used at that time. 
+	#!TODO: Check (1) if flight already exists and (2)if plane is already being used at that time or (3)or if plane is in maintenance.
+	#(1) flight exists
+	exist_test = 'SELECT * FROM `flights` WHERE flightNum = %s'
+	cursor.execute(exist_test, (flightNum))
+	check_val = cursor.fetchall()
+	if(check_val):
+		message = "This flight already exists."
+		return render_template('addMaintenance.html', message = message)
+	#(2) if plane is being used
+
+	#(3) maintenence check
+	main_test = '''
+			SELECT flightNum
+			FROM maintenancePeriod
+			NATURAL JOIN uses
+			NATURAL JOIN flights 
+			WHERE (startDate < %s OR (startDate = %s AND startTime < %s))
+			AND (endDate > %s OR (endDate = %s AND endTime > %s))
+			UNION
+			SELECT flightNum
+			FROM maintenancePeriod
+			NATURAL JOIN uses
+			NATURAL JOIN flights 
+			WHERE (startDate < %s OR (startDate = %s AND startTime < %s))
+			AND (endDate > %s OR (endDate = %s AND endTime > %s));
+			'''
+	cursor.execute(main_test, (deptDate, deptDate, deptTime, deptDate, deptDate, deptTime, arrDate, arrDate, arrTime, arrDate, arrDate, arrTime)) 
+	checkmain = cursor.fetchall()
+	if(checkmain):
+		message = "This plane will be in maintenence during the proposed flight time."
+		return render_template('addMaintenance.html', message = message)
+
 	flightq = 'INSERT INTO flights Values (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 	print(flightNum, deptDate, deptTime,arrDate, arrTime, baseTicketPrice, arrAirportCode, deptAirportCode, fstatus)
 	#print('Executing flight insert ...')
@@ -415,7 +446,6 @@ def addAirplane():
 	return render_template('addAirplane.html')
 @app.route('/addAirplaneAuth', methods =["POST"])
 def addAirplaneA():
-	name = request.form['name']
 	planeID = request.form['planeID']
 	numSeats = request.form['numSeats']
 	manuCompany = request.form['manuCompany']
@@ -423,7 +453,20 @@ def addAirplaneA():
 	manuDate =  request.form['manuDate']
 
 	cursor = conn.cursor()
-	#implement check it doesn't already exist
+
+	checkq = 'SELECT * FROM `airplane` WHERE planeID = %s'
+	cursor.execute(checkq, (planeID))
+	temp = cursor.fetchone();
+
+	#check the plane doesn't exist. exit if so. 
+	if(temp):
+		message = "This plane already exists."
+		return render_template('addAirplane.html', message = message)
+
+	airlineq = 'SELECT airlineName FROM worksfor WHERE username = %s'
+	cursor.execute(airlineq, (session['username']))	
+	airlinename = cursor.fetchone()['airlineName']
+
 	query = 'SELECT * FROM airplane WHERE planeID = %s'
 	cursor.execute(query, planeID)
 	if(cursor.fetchone() != 'None'):
@@ -431,7 +474,7 @@ def addAirplaneA():
 		return render_template('addAirplane.html', message = message)
 	
 	ins_airplane = 'INSERT INTO airplane VALUES(%s, %s, %s, %s, %s, %s, %s)'
-	cursor.execute(ins_airplane, (planeID, name, numSeats, manuCompany, modelNum, manuDate, 'null' ))
+	cursor.execute(ins_airplane, (planeID, airlinename, numSeats, manuCompany, modelNum, manuDate, 'null' ))
 	conn.commit()
 	print("flag")
 	message = "Flight sucessfully added"
@@ -442,27 +485,59 @@ def addAirplaneA():
 @app.route('/addMaintenance', methods = ['GET','POST'])
 def addMaintenance():
 	cursor = conn.cursor()
-	query = 'SELECT * FROM flights WHERE CURRENT_DATE < deptDate'
-	cursor.execute(query)
-	flights= cursor.fetchall()
+
+	#get airline
+	airlineq = 'SELECT airlineName FROM worksfor WHERE username = %s'
+	cursor.execute(airlineq, (session['username']))	
+	airlinename = cursor.fetchone()['airlineName']
+
+	query = 'SELECT * FROM airplane WHERE NAME = %s'
+	cursor.execute(query, (airlinename))
+	planes= cursor.fetchall()
 	cursor.close()
-	return render_template('addMaintenance.html', flights = flights)
+	return render_template('addMaintenance.html', planes = planes, airline = airlinename)
+
 @app.route('/addMaintenanceAuth', methods = ['POST'])
 def addMaintenanceA():
 	cursor = conn.cursor()
 	#!TODO: implement way to find planeID
-	#planeID = 
+	planeID = request.form['planeID']
+	print("planeID: ", planeID)
+
 	#!TODO: implement way to find airline
-	#airline = request.form['']
+	airline = request.form['airline']
+	print('airline: ', airline)
 	startDate = request.form['startDate']
 	startTime = request.form['startTime']
 	endDate = request.form['endDate']
 	endTime =  request.form['endTime']
 
 	#!TODO: Checked if plane is scheduled for that day
-	insert_maintenance = 'INSERT INTO maintenanceperiod VALUES (%s, %s, %s, %s, %s, %s, %s)'
-	cursor.execute(insert_maintenance, (planeID, airline, startDate, startTime, endDate, endTime))
+	query = '''
+		SELECT flightNum
+		FROM maintenancePeriod
+		NATURAL JOIN uses
+		NATURAL JOIN flights 
+		WHERE (%s < deptDate OR (%s = deptDate AND %s < deptTime))
+		AND (%s > deptDate OR (%s = deptDate AND %s > deptTime))
+		UNION
+		SELECT flightNum
+		FROM maintenancePeriod
+		NATURAL JOIN uses
+		NATURAL JOIN flights 
+		WHERE (%s < arrDate OR (%s = arrDate AND %s < arrTime))
+		AND (%s > arrDate OR (%s = arrDate AND %s > arrTime));
+		'''
+	cursor.execute(query, (startDate, startDate, startTime, endDate, endDate, endTime, startDate, startDate, startTime, endDate, endDate, endTime))
+	check = cursor.fetchall()
+	if(check):
+		message = "Maintenance conflicts with existing flight."
+		return render_template('addMaintenance.html', message = message)
 
+
+	insert_maintenance = 'INSERT INTO maintenanceperiod VALUES (%s, %s, %s, %s, %s, %s)'
+	cursor.execute(insert_maintenance, (planeID, airline, startDate, startTime, endDate, endTime))
+	conn.commit();
 	message = "Maintenance sucessfully scheduled"
 	return render_template('addMaintenance.html', message = message)
 
