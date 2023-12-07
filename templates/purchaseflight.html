@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchasing Flight</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+<body>
+    <style>
+        #purchasing-form{
+            justify-content: center;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        form, #flight-info {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+
+    <header>
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+        </a>
+        <!-- BASIC HOMEPAGE-->
+        {% if session['usertype'] != 'null' %}
+        <div class = 'headertext'>Welcome {{session['username']}}!</div>
+        <a href="/home">
+            <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+        </a>        
+        {% endif %}
+        <!-- HEADER FOR USERS-->
+        {% if session['usertype'] == 'null' %}
+        <div class="header-buttons-container">
+            <a href="/login" class="header-button">Login</a>
+            <a href="/custregister" class="header-button">Register</a>
+        </div>
+        {% endif %}
+    </header>
+    <div id= 'flight-info'>
+        <h2>Flight Summary</h2>
+        Flight {{flight['flightNum']}} <br>
+        Departs {{flight['deptDate']}} from {{flight['deptAirportCode']}} <br>
+        Arrives {{flight['arrDate']}} to {{flight['arrAirportCode']}}
+        
+
+    </div>
+    <form id='purchasing-form' action="/purchasingAuth">
+        <!--
+            user info
+            payment info
+            flight num
+        -->
+        <title>Card Information</title>
+        <!--Display Price + Flight Info-->
+
+        <label for="cardType">Card Type:</label>
+        <select id="cardType" name="cardType">
+            <option value="debit">Debit</option>
+            <option value="credit">Credit</option>
+        </select>
+        <br>
+        <label for="cardName">Name: </label>
+        <input type="text" name = "cardName">
+        <br>
+        <label for="cardNumber">Card Number</label>
+        <input type="text" name = "cardNumber" placeholder="####-####-####-####">
+        <br>
+        <label for="expirationDate">Expiration Date:</label>
+        <input type="text" name = "expirationDate"> <br>
+        
+        
+        <!--ticketID: Have to generate ticketID-->
+
+        <input type="submit" value="Purchase">
+
+    </form>
+    
+</body>
+</html>

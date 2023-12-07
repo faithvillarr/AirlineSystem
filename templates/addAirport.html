@@ -1,0 +1,104 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register New Airport</title>
+	<style>
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+    
+        h1, h2 {
+            text-align: center;
+        }
+    
+        form {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+        }
+    
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 0 auto; 
+            display: block;
+        }
+
+    </style>
+</head>
+
+<body>
+	<header>
+        <h1>Register New Airport</h1>
+    </header>
+
+    {% if message %}
+    {{message}}
+    {%endif%}
+
+    <h2>Airport Information</h2>
+    <main>
+        <form action="/addAirportAuth" method="POST">
+            <label>Airport Code:</label>
+            <input type="text" name = "airportCode" id='airportCode' placeholder="Airport Code" required> </label> <br>
+            
+            <label>Name: </label>
+            <input type="text" name="name" placeholder="Name" required> </label> <br>
+            
+            <label>City:</label>
+            <input type="text" name = "city" placeholder="City" required> </label> <br>
+            
+            <label>Country:</label>
+            <input type="text" name = "country" placeholder="Country" required> </label> <br>
+            
+            <label>Number of Terminals:</label>
+            <input type="text" name = "termNum" placeholder="Number of Terminals" required> </label> <br>
+            
+            <label>Airport Type:</label>
+            <select name="arprtType" required>
+                <option value="domestic">Domestic</option>
+                <option value="international">International</option>
+            </select>
+            
+            <button type="submit">Register</button>
+        </form>
+    </main>
+    
+    <br>
+    <h2><a href="/home"> Go back</a></h2>
+    
+</body>
+</html>

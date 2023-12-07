@@ -74,14 +74,23 @@
                 <td>{{ flight['arrDate'] }}</td>
                 <td>{{ flight['arrTime'] }}</td>
                 <td>{{ flight['arrAirportCode'] }}</td>
-                <td>{{ flight['status'] }}</td>
+                <td>{{ flight['fstatus'] }}</td>
                 <td>{{ flight['baseTicketPrice'] }}</td>
+                {%if session['usertype'] != 'customer'%}
                 <td> 
                     <form action="/flightdetails" method="GET">
                         <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
                         <input type="submit" value="View Details">
                     </form>
                 </td>
+                {%else%}
+                <td>
+                <form action="/purchaseflight" method="GET">
+                    <input type="hidden" name="myname" value="{{ flight['flightNum'] }}">
+                    <input type="submit" value="Purchase">
+                </form>
+                </td>
+                {%endif%}
 
             </tr>
         {% endfor %}

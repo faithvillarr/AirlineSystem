@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Maintenance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<style>
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+    
+        h1, h2 {
+            text-align: center;
+        }
+    
+        form {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+        }
+    
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 0 auto; 
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/">
+        <img src="{{ url_for('static', filename='logo.png') }}"  alt="Logo" class="logo">
+        </a>
+
+        {% if session['usertype'] != 'null' %}
+            <div class = 'headertext'>Welcome {{session['username']}}!</div>
+            <a href="/home">
+                <img src = "{{ url_for('static', filename='user.png') }}"  alt="User" class="userprofile">
+            </a>        
+        {% endif %}
+        {% if session['usertype'] == 'null' %}
+        <div class="header-buttons-container">
+            <a href="/login" class="header-button">Login</a>
+            <a href="/custregister" class="header-button">Register</a>
+        </div>
+        {% endif %}
+        
+        
+    </header>
+
+    <main>
+
+        <form action="/addAirplaneAuth" method="POST">
+            <label for ="flightID">Flight:</label>
+            <select name="flightID" required>
+                {% for flight in flights %}
+                    <option value="{{ flight['flightNum'] }}">{{ flight['flightNum'] }}: {{ flight['deptAirportCode'] }} &larr; {{ flight['arrAirportCode'] }} </option>
+                {% endfor %}
+            </select> <br>
+
+            <br>
+            <!--planeID, NAME, startDate, startTime,endDate,endTime	-->
+            <label for="startDate">Start Date: </label>
+            <input type="date" name="startDate">
+            <label for="startTime">Start Time:</label>
+            <input type="date" name="startTime"> <br>
+            <label for="endDate">End Date:</label>
+            <input type="date" name="endDate">
+            <label for="endTime">End Time:</label>
+            <input type="date" name="endTime"> <br>
+
+            <button type="submit">Register</button>
+        </form>
+    </main>
+    
+</body>
+</html>

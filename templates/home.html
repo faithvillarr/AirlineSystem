@@ -60,9 +60,9 @@
             
         </table>  
         </table> 
-    </div>
+        </div>
 
-    <div class = 'flight-table' id = "past">
+        <div class = 'flight-table' id = "past">
         <h3>Past Flights</h3> Leave a review!
         <table id = 'flightTable'>
             <th>Flight #</th>
@@ -93,9 +93,9 @@
         {% endfor %}
         </table>  
         
-    </div>
-</section>
-    <aside>
+        </div>
+        </section>
+        <aside>
         <div id = 'user-spending'>
             <h3>Total Spending in 2023</h3>
             ${{totalspent['sum(pricePaid)']}}
@@ -106,12 +106,51 @@
             <a href="/cancel-flight">Cancel Flight</a>
             <a href="/index">Purchase Flights</a>
         </div>
-    </aside>
+        </aside>
         
 
-        {% endif %}
+        {% endif %} <!-- End of customer info-->
 
+    <!-- Staff Homepage-->
+    {% if session['usertype'] == 'staff' %}
+    
+    <!-- Creating new stuff: {flights, statuses, maintenence, planes, airports} -->  
+    <div id = "creation-menu">
+        <h2>Menu</h2>
+        <a href="/addAirplane">Add Plane</a>
+        <a href="/addFlight"><button type="button">Add Flight</button></a>
+        <a href="/addMaintenance"><button type="button">Schedule Maintenance</button></a>
+        <a href="/addAirport"><button type="button">Add Airport</button></a>
+        <a href="/addStatus"><button type="button">Set Flight Status</button></a>
+    </div>
+    
+    <!--Search all flights. Also view passengers and ratings and aergae review-->
+
+    <!--Frequent Flyers-->
+    <div id = "freq-flyers">
+        <!-- Need  -->
+        <h2>Frequent Flyers</h2>
         
+
+    </div>
+    <!--Total Revenue-->
+    <div id = "total-rec">
+        <h2>Total Revenue</h2>
+        {{totalRevenue}}
+
+    
+    </div>
+    <!--User Info-->
+    <div id = "user-info">
+        <a href="/userInfo">User Info</a>
+    </div>
+
+    {%endif%}
+
+
+
+
+
 	{% endif %}
 
 <!--<form action="/post" method="POST"></form>-->

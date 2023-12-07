@@ -238,34 +238,44 @@ def flightDetails(): # <input type="hidden" name="flight_num" value="{{ flight['
 
 @app.route('/home')
 def home():
-    username = session['username']
-    if(session['usertype'] == 'customer'):
-        cursor = conn.cursor();
+	username = session['username']
+	if(session['usertype'] == 'customer'):
+		cursor = conn.cursor();
 
 		#past flights
-        pastquery = 'SELECT flights.flightNum, flights.deptAirportCode, flights.deptDate, flights.deptTime, flights.arrAirportCode, flights.arrDate, flights.arrTime, flights.fstatus, flights.baseTicketPrice FROM flights INNER JOIN ticket ON ticket.flightNum = flights.flightNum WHERE ticket.emailAdd = %s AND flights.deptDate < CURRENT_DATE;'
-        cursor.execute(pastquery, (username))
-        pastflights = cursor.fetchall() 
-        print("Past Flights:\n")
-        # for i in pastflights:
-        #     print(i)
+		pastquery = 'SELECT flights.flightNum, flights.deptAirportCode, flights.deptDate, flights.deptTime, flights.arrAirportCode, flights.arrDate, flights.arrTime, flights.fstatus, flights.baseTicketPrice FROM flights INNER JOIN ticket ON ticket.flightNum = flights.flightNum WHERE ticket.emailAdd = %s AND flights.deptDate < CURRENT_DATE;'
+		cursor.execute(pastquery, (username))
+		pastflights = cursor.fetchall() 
+		print("Past Flights:\n")
+		# for i in pastflights:
+		#     print(i)
 
 		#future flights
-        futurequery = 'SELECT flights.flightNum, flights.deptAirportCode, flights.deptDate, flights.deptTime, flights.arrAirportCode, flights.arrDate, flights.arrTime, flights.fstatus, flights.baseTicketPrice FROM flights INNER JOIN ticket ON ticket.flightNum = flights.flightNum WHERE ticket.emailAdd = %s AND flights.deptDate >= CURRENT_DATE;'
-        cursor.execute(futurequery, (username))
-        upcflights = cursor.fetchall() 
+		futurequery = 'SELECT flights.flightNum, flights.deptAirportCode, flights.deptDate, flights.deptTime, flights.arrAirportCode, flights.arrDate, flights.arrTime, flights.fstatus, flights.baseTicketPrice FROM flights INNER JOIN ticket ON ticket.flightNum = flights.flightNum WHERE ticket.emailAdd = %s AND flights.deptDate >= CURRENT_DATE;'
+		cursor.execute(futurequery, (username))
+		upcflights = cursor.fetchall() 
 
-        spendingquery = 'SELECT sum(pricePaid) from purchased where emailAdd = %s'
-        cursor.execute(spendingquery, (username))
-        totalspent = cursor.fetchone();
-        cursor.close()
-        return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
-        # for i in upcflights:
-        #     print(i)
+		spendingquery = 'SELECT sum(pricePaid) from purchased where emailAdd = %s'
+		cursor.execute(spendingquery, (username))
+		totalspent = cursor.fetchone();
+		cursor.close()
+		return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
+		# for i in upcflights:
+		#     print(i)
 
-    if(session['usertype'] == 'staff'):
-        print('staff')		
-    return render_template('home.html',)#, posts=data1)
+	if(session['usertype'] == 'staff'):
+		#Get total revenue
+		cursor = conn.cursor()
+		query = 'SELECT w.airlineName FROM worksFor w WHERE w.userName = %s'
+		cursor.execute(query, session['username'])
+		airline = cursor.fetchone()['airlineName'];
+		print(airline)
+		query = 'SELECT SUM(p.pricePaid) AS total_revenue FROM purchased p JOIN ticket t ON p.ticketID = t.ticketID JOIN flights f ON t.flightNum = f.flightNum WHERE f.airline = %s'
+		#total_revenue = cursor.execute(query, airline)
+		#print(total_revenue)
+
+			
+	return render_template('home.html')#, posts=data1)
 
 @app.route('/logout')
 def logout():
@@ -327,6 +337,171 @@ def writingReview():
 		conn.commit()
 	cursor.close()
 	return redirect(url_for('home'))
+
+@app.route('/purchaseflight', methods=['GET', 'POST'])
+def purchasePage():
+    cursor = conn.cursor()
+    flight_num = request.args.get('myname')
+    print("Flight #: ", flight_num)
+    query = 'SELECT * FROM flights WHERE flightNum = %s'
+    cursor.execute(query, (flight_num,))
+    flight = cursor.fetchone()
+    print(flight)
+    cursor.close()
+    return render_template('purchaseflight.html', flight=flight)
+
+@app.route('/purchasingAuth', methods = ['GET'])
+def purchasing():
+	cursor = conn.cursor()
+	
+	#!TODO:  implement the purchasing stuff in database
+	
+	cursor.close()
+	return redirect(url_for('home'))
+
+
+# ADDING FLIGHTS
+@app.route('/addFlight', methods = ['GET'])
+def addFlight():
+	cursor = conn.cursor()
+	query = 'SELECT planeID FROM `airplane` WHERE name = ( SELECT airlineName FROM worksfor where userName = %s)' 
+	cursor.execute(query, (session['username']))
+	planes = cursor.fetchall()
+	return render_template('addFlight.html', planes = planes)
+@app.route('/addFlightAuth', methods = ['POST'])
+def addFlightA():
+	#!TODO: insert a check for maintenence and pre-existence
+	print("Flga")
+	flightNum = request.form['flightNum']
+	deptAirportCode = request.form['deptAirportCode']
+	deptDate = request.form['deptDate']
+	deptTime = request.form['deptTime']
+	arrAirportCode = request.form['arrAirportCode']
+	arrDate = request.form['arrDate']
+	arrTime = request.form['arrTime']
+	baseTicketPrice = request.form['baseTicketPrice']
+	fstatus = request.form['fstatus']
+	planeID = request.form['selectedPlane']
+	cursor = conn.cursor()
+
+	airlineq = 'SELECT airlineName FROM worksfor WHERE username = %s'
+	#print('Executing worksfor...')
+	cursor.execute(airlineq, (session['username']))	
+	airline = cursor.fetchone()['airlineName']
+	#print(airline)
+	#print('success\n')
+
+	#!TODO: Check (1) if flight already exists and (2)if plane is already being used at that time. 
+	flightq = 'INSERT INTO flights Values (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+	print(flightNum, deptDate, deptTime,arrDate, arrTime, baseTicketPrice, arrAirportCode, deptAirportCode, fstatus)
+	#print('Executing flight insert ...')
+	cursor.execute(flightq, (flightNum, deptDate, deptTime,arrDate, arrTime, baseTicketPrice, arrAirportCode, deptAirportCode, fstatus))
+	#print('success!\n')
+	conn.commit()
+	#NAME 	flightNum 	deptDate 	deptTime 	planeID 
+	print(airline, flightNum, deptDate, deptTime, planeID)
+	print('Executing plane in use insert ...')
+	usesq = 'INSERT INTO uses VALUES (%s, %s, %s, %s, %s)'
+	cursor.execute(usesq, (airline, flightNum, deptDate, deptTime, planeID))
+	conn.commit()
+
+	message = "Flight sucessfully added"
+	return render_template('addFlight.html', message = message)
+
+
+#ADDING PLANES
+@app.route('/addAirplane', methods = ['GET'])
+def addAirplane():
+	return render_template('addAirplane.html')
+@app.route('/addAirplaneAuth', methods =["POST"])
+def addAirplaneA():
+	name = request.form['name']
+	planeID = request.form['planeID']
+	numSeats = request.form['numSeats']
+	manuCompany = request.form['manuCompany']
+	modelNum = request.form['modelNum']
+	manuDate =  request.form['manuDate']
+
+	cursor = conn.cursor()
+	#implement check it doesn't already exist
+	query = 'SELECT * FROM airplane WHERE planeID = %s'
+	cursor.execute(query, planeID)
+	if(cursor.fetchone() != 'None'):
+		message = "Flight already exists"
+		return render_template('addAirplane.html', message = message)
+	
+	ins_airplane = 'INSERT INTO airplane VALUES(%s, %s, %s, %s, %s, %s, %s)'
+	cursor.execute(ins_airplane, (planeID, name, numSeats, manuCompany, modelNum, manuDate, 'null' ))
+	conn.commit()
+	print("flag")
+	message = "Flight sucessfully added"
+	return render_template('addAirplane.html', message = message)
+
+
+#ADDING MAINTENENCE
+@app.route('/addMaintenance', methods = ['GET','POST'])
+def addMaintenance():
+	cursor = conn.cursor()
+	query = 'SELECT * FROM flights WHERE CURRENT_DATE < deptDate'
+	cursor.execute(query)
+	flights= cursor.fetchall()
+	cursor.close()
+	return render_template('addMaintenance.html', flights = flights)
+@app.route('/addMaintenanceAuth', methods = ['POST'])
+def addMaintenanceA():
+	cursor = conn.cursor()
+	#!TODO: implement way to find planeID
+	#planeID = 
+	#!TODO: implement way to find airline
+	#airline = request.form['']
+	startDate = request.form['startDate']
+	startTime = request.form['startTime']
+	endDate = request.form['endDate']
+	endTime =  request.form['endTime']
+
+	#!TODO: Checked if plane is scheduled for that day
+	insert_maintenance = 'INSERT INTO maintenanceperiod VALUES (%s, %s, %s, %s, %s, %s, %s)'
+	cursor.execute(insert_maintenance, (planeID, airline, startDate, startTime, endDate, endTime))
+
+	message = "Maintenance sucessfully scheduled"
+	return render_template('addMaintenance.html', message = message)
+
+#ADDING AIRPORTS
+@app.route('/addAirport', methods = ['GET'])
+def addAirport():
+	return render_template('addAirport.html')
+@app.route('/addAirportAuth', methods = ['POST'])
+def addAirportA():
+	airportCode = request.form['airportCode']
+	name = request.form['name']
+	city = request.form['city']
+	country = request.form['country']
+	termNum = request.form['termNum']
+	arprtType =  request.form['arprtType']
+
+	cursor = conn.cursor()
+	query = 'SELECT * FROM airport WHERE airportCode = %s'
+	cursor.execute(query, airportCode)
+	if(cursor.fetchone() != 'None'):
+		message = "Flight already exists"
+		return render_template('addAirport.html', message = message)
+		
+	ins_airplane = 'INSERT INTO airport VALUES(%s, %s, %s, %s, %s, %s)'
+	print(airportCode, name, city, country, termNum, arprtType)
+	cursor.execute(ins_airplane, (airportCode, name, city, country, termNum, arprtType))
+	conn.commit()
+	message = "Flight sucessfully added"
+	return render_template('addAirport.html', message = message)
+
+#ADDING STATUS'
+@app.route('/addStatus', methods = ['GET'])
+def addStatus():
+	return render_template('addStatus.html')
+@app.route('/addStatusAuth')
+def addStatusA():
+	message = "Flight sucessfully added"
+	return render_template('addStatus.html', message = message)
+
 
 		
 app.secret_key = 'some key that you will never guess'

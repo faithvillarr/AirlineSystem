@@ -1,0 +1,129 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register New Flight</title>
+	<style>
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+    
+        h1, h2 {
+            text-align: center;
+        }
+    
+        form {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+        }
+    
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 0 auto; 
+            display: block;
+        }
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Register New Flight</h1>
+    </header>
+
+    {% if message %}
+    {{message}}
+    {%endif%}
+    <main>
+        <form action="/addFlightAuth" method="POST">
+
+            <!--Full texts
+	flightNum 	deptDate Ascending 1 	
+    deptTime 	arrDate 	arrTime 	
+    baseTicketPrice 	arrAirportCode 	
+    deptAirportCode 	fstatus 	
+    plane -->
+            <label>Flight Number:</label>
+            <input type="text" name="flightNum" placeholder="Flight Number" required> <br>
+            
+            <label>Departure Airport Code:</label>
+            <input type="text" name="deptAirportCode" placeholder="Departure Airport Code" required> <br>
+        
+            <label>Departure Date:</label>
+            <input type="date" name="deptDate" placeholder="Departure Date" required> <br>
+        
+            <label>Departure Time:</label>
+            <input type="time" name="deptTime" placeholder="Departure Time" required> <br>
+            
+            <label>Arrival Airport Code:</label>
+            <input type="text" name="arrAirportCode" placeholder="Arrival Airport Code" required> <br>
+        
+            <label>Arrival Date:</label>
+            <input type="date" name="arrDate" placeholder="Arrival Date" required> <br>
+        
+            <label>Arrival Time:</label>
+            <input type="time" name="arrTime" placeholder="Arrival Time" required> <br>
+        
+        
+            <label>Base Ticket Price:</label>
+            <input type="text" name="baseTicketPrice" placeholder="Base Ticket Price" required> <br>
+    
+            <label>Status:</label>
+            <select name="fstatus" required>
+                <option value="on-time">On-Time</option>
+                <option value="delayed">Delayed</option>
+                <option value="cancelled">Cancelled</option>
+            </select> <br>
+
+            <label>Select Plane:</label>
+            <select name="selectedPlane" required>
+                {% for plane in planes %}
+                    <option value="{{ plane['planeID'] }}">{{ plane['planeID'] }}</option>
+                {% endfor %}
+            </select> <br>
+        
+            <button type="submit">Register</button>
+        </form>
+        
+    </main>
+	
+    <br>
+    <h2><a href="/home"> Go back</a></h2>
+
+
+</body>
+</html>
