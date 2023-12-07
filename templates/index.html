@@ -7,6 +7,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Airport System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        #purchasing-form{
+            justify-content: center;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #searchForm {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        #search-title {
+    text-align: center;
+}
+
+    </style>
 </head>
 
 <body>
@@ -38,12 +61,21 @@
 
 <div id = 'searchForm'>
     <form action="/searchflight" method="POST">
+        <h2>Search For Flights</h2>
+        <label for="flightType">Select Flight Type:</label>
+        <select id="flightType" name="flightType">
+            <option value="oneway">One Way</option>
+            <option value="roundtrip">Round Trip</option>
+        </select> <br>
+
         <!-- Search for flights: Search for future flights (one way or round trip) based on source city/airport name,
         destination city/airport name, dates (departure or return). -->
         <input type="text" name="deptapt" placeholder="Departure Airport">
+        Departure Date:
         <input type="date" name="deptdate" placeholder="Departure Date"> <br>
         <input type="text" name="arrapt" placeholder="Arrival Airport">
-        <input type="date" name="arrdate" placeholder="Arrival Date"> <br>
+        Return Date:   
+        <input type="date" name="returndate" placeholder="Return Date"> <br>
 
         <input type="submit" value='Search for flights' />
     </form>
@@ -56,7 +88,12 @@
 	}
 </style>
 
-<div id = 'flightTable'>
+<div id='flightTable'>
+    {% if trip_type == 'roundtrip' %}
+        <h2>Departing Flight</h2>
+    {% else %}
+        <h2>Flights</h2>
+    {% endif %}
     <table>
         <th>Flight #</th>
         <th>Departue Date</th>
@@ -68,7 +105,7 @@
         <th>Status</th>
         <th>Price</th>
 
-        {% for flight in flights %}
+        {% for flight in deptflights %}
             <tr>
                 <td>{{ flight['flightNum'] }}</td>
                 <td>{{ flight['deptDate'] }}</td>
@@ -98,6 +135,55 @@
             </tr>
         {% endfor %}
     </table>
+
+    <!-- RETURNING FLIGHTS -->
+    {% if trip_type == 'roundtrip' %}
+        <h2>Returning Flight</h2>
+    {% endif %}
+    <table>
+        <th>Flight #</th>
+        <th>Departue Date</th>
+        <th>Departure Time</th>
+        <th>Departure Airport</th>
+        <th>Arrival Date</th>
+        <th>Arrival Time</th>
+        <th>Arrival Airport</th>
+        <th>Status</th>
+        <th>Price</th>
+
+        {% for flight in returnflights %}
+            <tr>
+                <td>{{ flight['flightNum'] }}</td>
+                <td>{{ flight['deptDate'] }}</td>
+                <td>{{ flight['deptTime'] }}</td>
+                <td>{{ flight['deptAirportCode'] }}</td>
+                <td>{{ flight['arrDate'] }}</td>
+                <td>{{ flight['arrTime'] }}</td>
+                <td>{{ flight['arrAirportCode'] }}</td>
+                <td>{{ flight['fstatus'] }}</td>
+                <td>{{ flight['baseTicketPrice'] }}</td>
+                {%if session['usertype'] != 'customer'%}
+                <td> 
+                    <form action="/flightdetails" method="GET">
+                        <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
+                        <input type="submit" value="View Details">
+                    </form>
+                </td>
+                {%else%}
+                <td>
+                <form action="/purchaseflight" method="GET">
+                    <input type="hidden" name="myname" value="{{ flight['flightNum'] }}">
+                    <input type="submit" value="Purchase">
+                </form>
+                </td>
+                {%endif%}
+
+            </tr>
+        {% endfor %}
+    </table>
+
+
+
 </div>
 </table>
 <a href="/logout">Logout</a>

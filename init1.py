@@ -2,7 +2,8 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 import pymysql.cursors, json
 from datetime import datetime
-
+import string
+import random
 #Initialize the app from Flask
 app = Flask(__name__)
 
@@ -36,12 +37,11 @@ def hello():
     cursor.close()
     error = None
 
-    return render_template('index.html', flights = data2)
+    return render_template('index.html', deptflights = data2, trip_type = 'oneway')
 
 #Define route for login
 @app.route('/login') #login irl
 def login():
-
 	return render_template('login.html')
 
 #Define route for stafflogin
@@ -208,25 +208,44 @@ def registerAStaff():
 #! My app routes!!
 @app.route('/searchflight', methods=['GET','POST'])
 def searchFlights():
+	print("flag flag")
 	deptapt = request.form['deptapt']
 	deptdate = request.form['deptdate']
-	deptdate = datetime.strptime(deptdate, '%Y-%m-%d').date()
+	trip_type = request.form['flightType']
+	arrapt = request.form['arrapt']
+	returndate = request.form['returndate']
 
+	deptdate = datetime.strptime(deptdate, '%Y-%m-%d').date()
 	if(session['usertype'] != 'staff'):
 		current_date = datetime.now().date()
 		if deptdate < current_date:
 			message = "invalid departure date"
 			return render_template('index.html', message = message)
-	arrapt = request.form['arrapt']
-	arrdate = request.form['arrdate']
-
-	cursor = conn.cursor()
-	query = 'SELECT * FROM flights WHERE deptDate = %s and deptAirportCode = %s and arrDate = %s and arrAirportCode = %s'
-	cursor.execute(query, (deptdate, deptapt, arrdate, arrapt))
-	data3 = cursor.fetchall()
-	cursor.close()
-	error = None
-	return render_template('index.html', flights = data3)
+	deptdate = request.form['deptdate']
+	
+	if(trip_type == 'roundtrip'):
+		cursor = conn.cursor()
+		deptquery = 'SELECT * FROM flights WHERE deptDate = %s and deptAirportCode = %s and arrAirportCode = %s'
+		cursor.execute(deptquery, (deptdate, deptapt, arrapt))
+		deptdata = cursor.fetchall()
+		print("deptdata: ",deptdata)
+		arrquery = 'SELECT * FROM flights WHERE deptDate = %s and deptAirportCode = %s and arrAirportCode = %s'
+		cursor.execute(arrquery, (returndate, arrapt, deptapt,))
+		returndata = cursor.fetchall()
+		print("returndata: ", returndata)
+		cursor.close()
+		error = None
+		return render_template('index.html', deptflights = deptdata, returnflights = returndata, trip_type= 'roundtrip')
+	
+	else: # one-way
+		cursor = conn.cursor()
+		query = 'SELECT * FROM flights WHERE deptDate = %s and deptAirportCode = %s and arrAirportCode = %s'
+		cursor.execute(query, (deptdate, deptapt, arrapt))
+		data3 = cursor.fetchall()
+		print(data3)
+		cursor.close()
+		error = None
+		return render_template('index.html', deptflights = data3, trip_type= 'oneway')
 
 @app.route('/flightdetails', methods = ['GET', 'POST'])
 def flightDetails(): # <input type="hidden" name="flight_num" value="{{ flight['flightNum'] }}">
@@ -389,17 +408,68 @@ def purchasePage():
     flight_num = request.args.get('myname')
     print("Flight #: ", flight_num)
     query = 'SELECT * FROM flights WHERE flightNum = %s'
-    cursor.execute(query, (flight_num,))
+    cursor.execute(query, (flight_num))
     flight = cursor.fetchone()
     print(flight)
     cursor.close()
     return render_template('purchaseflight.html', flight=flight)
 
-@app.route('/purchasingAuth', methods = ['GET'])
+@app.route('/purchasingAuth', methods = ['GET', 'POST'])
 def purchasing():
 	cursor = conn.cursor()
-	
-	#!TODO:  implement the purchasing stuff in database
+
+	# IMPORT random and string
+	letters = string.ascii_letters
+	ticketID = ''.join(random.choice(letters) for i in range(10))
+
+	emailAdd = session['username']
+	userInfoQ = 'SELECT firstname, lastname, dateBirth FROM customer WHERE emailAdd = %s'
+	cursor.execute(userInfoQ, emailAdd)
+	userInfo = cursor.fetchone()
+	firstname, lastname, dob = userInfo.get('firstname'), userInfo.get('lastname'), userInfo.get('dateBirth')
+
+	flightNum = request.form['flightNum']
+	flightInfoQ = 'SELECT deptDate, deptTime, baseTicketPrice FROM flights WHERE flightNum = %s'
+	cursor.execute(flightInfoQ, flightNum)
+	flightInfo = cursor.fetchone()
+	deptDate, deptTime, pricePaid = flightInfo.get('deptDate'), flightInfo.get('deptTime'), flightInfo.get('baseTicketPrice')
+
+	cardType = request.form['cardType']
+	cardName = request.form['cardName']
+	cardNumber = request.form['cardNumber']
+	expirationDate = request.form['expirationDate']
+
+	#how many 
+	currCapacityQ = 'SELECT flightNum, COUNT(flightNum) FROM ticket WHERE flightNum = %s GROUP BY flightNum'
+	cursor.execute(currCapacityQ, (flightNum))
+	temp = cursor.fetchone()
+	if(temp):
+		currCapacity = cursor.fetchone()['COUNT(flightNum)']
+	else: 
+		currCapacity = 0
+
+	maxCapacityQ = 'SELECT numSeats FROM uses U JOIN airplane A ON U.planeID = A.planeID AND U.NAME = A.NAME WHERE U.flightNum = %s AND U.deptDate = %s AND U.deptTime = %s '
+	cursor.execute(maxCapacityQ, (flightNum, deptDate, deptTime))
+	maxCapacity = cursor.fetchone()
+	print("maxCapacity: ", maxCapacity)
+	if (maxCapacity['numSeats']):
+		maxCapacity = maxCapacity['numSeats']
+		if (currCapacity >= 0.8*maxCapacity):
+			pricePaid *= 1.25
+			print("High Demand. Price is increased to", pricePaid)
+
+	ins_ticket = 'INSERT INTO ticket VALUES(%s, %s, %s, %s, %s, %s)'
+	cursor.execute(ins_ticket, (ticketID, emailAdd, firstname, lastname, dob, flightNum))
+	conn.commit()
+
+
+	ins_purchase = 'INSERT INTO purchased VALUES(%s, %s, CURDATE(), CURTIME(), %s, %s, %s, %s, %s)'
+	cursor.execute(ins_purchase, (ticketID, emailAdd, cardType, cardNumber, cardName, expirationDate, pricePaid))
+	conn.commit()
+
+	ins_tforf = 'INSERT INTO tForf VALUES (%s, %s, %s, %s)'
+	cursor.execute(ins_tforf, (ticketID, flightNum, deptDate, deptTime))
+	conn.commit()
 	
 	cursor.close()
 	return redirect(url_for('home'))
@@ -545,11 +615,9 @@ def addMaintenance():
 @app.route('/addMaintenanceAuth', methods = ['POST'])
 def addMaintenanceA():
 	cursor = conn.cursor()
-	#!TODO: implement way to find planeID
 	planeID = request.form['planeID']
 	print("planeID: ", planeID)
 
-	#!TODO: implement way to find airline
 	airline = request.form['airline']
 	print('airline: ', airline)
 	startDate = request.form['startDate']
@@ -557,7 +625,6 @@ def addMaintenanceA():
 	endDate = request.form['endDate']
 	endTime =  request.form['endTime']
 
-	#!TODO: Checked if plane is scheduled for that day
 	query = '''
 		SELECT flightNum
 		FROM maintenancePeriod

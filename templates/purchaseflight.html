@@ -51,11 +51,11 @@
         <h2>Flight Summary</h2>
         Flight {{flight['flightNum']}} <br>
         Departs {{flight['deptDate']}} from {{flight['deptAirportCode']}} <br>
-        Arrives {{flight['arrDate']}} to {{flight['arrAirportCode']}}
-        
-
+        Arrives {{flight['arrDate']}} to {{flight['arrAirportCode']}} <br>
+        Price ${{flight['baseTicketPrice']}}
+    
     </div>
-    <form id='purchasing-form' action="/purchasingAuth">
+    <form id='purchasing-form' action="/purchasingAuth" method="post">
         <!--
             user info
             payment info
@@ -77,9 +77,10 @@
         <input type="text" name = "cardNumber" placeholder="####-####-####-####">
         <br>
         <label for="expirationDate">Expiration Date:</label>
-        <input type="text" name = "expirationDate"> <br>
+        <input type="date" name = "expirationDate" placeholder = 'YYYY-MM-DD'> <br>
         
-        
+        <input type="hidden" name="flightNum" value="{{ flight['flightNum'] }}">
+
         <!--ticketID: Have to generate ticketID-->
 
         <input type="submit" value="Purchase">
