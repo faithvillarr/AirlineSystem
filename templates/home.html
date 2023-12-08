@@ -26,6 +26,7 @@
             {% endif %}
         </header>
 
+        <!-- CUSTOMER HOMEPAGE -->
         {% if session['usertype'] == 'customer' %}
         <div class = 'flight-table' id = "myflights">
         <h3>Upcoming Flights</h3>
@@ -50,8 +51,9 @@
             <td>{{ flight['status'] }}</td>
             <td>{{ flight['baseTicketPrice'] }}</td>
             <td> 
-                <form action="/cancelflight" method="GET">
-                    <input type="submit" value="View Details">
+                <form action="/cancelflight" method="POST">
+                    <input type="hidden" name = "flightNum" value = "{{ flight['flightNum'] }}">
+                    <input type="submit" value="Cancel Flight">
                 </form>
             </td>
 
@@ -103,7 +105,6 @@
         </div>
         <div id = 'user options'>
             <a href="/userinfo">User Information</a>
-            <a href="/cancel-flight">Cancel Flight</a>
             <a href="/">Purchase Flights</a>
         </div>
         </aside>

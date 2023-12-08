@@ -119,7 +119,7 @@ def loginAuthStaff():
 
 #Authenticates the register
 @app.route('/registerAuthCust', methods=['GET', 'POST'])
-def registerAuthCust(): #!!!!!!!!	START WORKING HERE !!!!!!!!!!!!!!! need to copy and aug for staff login
+def registerAuthCust(): 
 	#grabs information from the forms
 	username = request.form['email']
 	password = request.form['password']
@@ -215,11 +215,16 @@ def searchFlights():
 	arrapt = request.form['arrapt']
 	returndate = request.form['returndate']
 
-	deptdate = datetime.strptime(deptdate, '%Y-%m-%d').date()
+	depttemp = datetime.strptime(deptdate, '%Y-%m-%d').date()
+	returntemp = datetime.strptime(returndate, '%Y-%m-%d').date()
 	if(session['usertype'] != 'staff'):
 		current_date = datetime.now().date()
-		if deptdate < current_date:
+		if depttemp < current_date:
 			message = "invalid departure date"
+			return render_template('index.html', message = message)
+		current_date = datetime.now().date()
+		if returntemp < current_date:
+			message = "invalid return date"
 			return render_template('index.html', message = message)
 	deptdate = request.form['deptdate']
 	
@@ -285,7 +290,12 @@ def home():
 		cursor.execute(spendingquery, (username))
 		totalspent = cursor.fetchone();
 		cursor.close()
-		return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
+		if(totalspent):
+			return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
+		else:
+			totalspent = 0;
+			return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
+
 		# for i in upcflights:
 		#     print(i)
 
@@ -443,8 +453,9 @@ def purchasing():
 	currCapacityQ = 'SELECT flightNum, COUNT(flightNum) FROM ticket WHERE flightNum = %s GROUP BY flightNum'
 	cursor.execute(currCapacityQ, (flightNum))
 	temp = cursor.fetchone()
+	print("crr temp: ", temp)
 	if(temp):
-		currCapacity = cursor.fetchone()['COUNT(flightNum)']
+		currCapacity = temp['COUNT(flightNum)']
 	else: 
 		currCapacity = 0
 
@@ -705,9 +716,38 @@ def addStatusA():
 	message = "Status Updated"
 	return render_template('addStatus.html', message = message)
 
-@app.route('/cancelflight')
+@app.route('/cancelflight', methods = ['POST'])
 def cancelFlight():
-	return render_template('/home')
+	flightNum = request.form["flightNum"]
+	emailAdd = session['username']
+	necc_infoq = '''SELECT flights.flightNum, flights.deptDate, flights.deptTime, purchased.ticketID, purchased.emailAdd
+		FROM flights
+		JOIN tforf ON flights.flightNum = tforf.flightNum AND flights.deptDate = tforf.deptDate AND flights.deptTime = tforf.deptTime
+		JOIN purchased ON tforf.ticketID = purchased.ticketID
+		WHERE emailAdd = %s
+		'''
+	
+	cursor = conn.cursor()
+	cursor.execute(necc_infoq, (session['username']))
+	temp = cursor.fetchone()
+	print("Cancel Info: ",temp)
+	
+	deptDate = temp['deptDate']
+	deptTime = temp['deptTime']
+	ticketID = temp['ticketID']
+	
+ #delete from ticket, for, purchased
+	purchase_del = "DELETE FROM purchased WHERE ticketID = %s AND emailAdd = %s"
+	cursor.execute(purchase_del, (ticketID, emailAdd))
+	conn.commit()
+	tforf_del = "DELETE FROM tforf WHERE ticketID = %s AND flightNum = %s AND deptDate = %s AND deptTime = %s"
+	cursor.execute(tforf_del, (ticketID, flightNum, deptDate, deptTime))
+	conn.commit()
+	ticket_del = "DELETE FROM ticket WHERE ticketID = %s"
+	cursor.execute(ticket_del, (ticketID))
+	conn.commit()
+	
+	return redirect(url_for('home'))
 
 		
 app.secret_key = 'some key that you will never guess'
