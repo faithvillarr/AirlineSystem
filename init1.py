@@ -448,6 +448,12 @@ def purchasing():
 	cardName = request.form['cardName']
 	cardNumber = request.form['cardNumber']
 	expirationDate = request.form['expirationDate']
+	#!TODO: Check card isn't 
+	expdatetemp = datetime.strptime(expirationDate, '%Y-%m-%d').date()
+	current_date = datetime.now().date()
+	if expdatetemp < current_date:
+		message = "invalid card"
+		return render_template('index.html', message = message)
 
 	#how many 
 	currCapacityQ = 'SELECT flightNum, COUNT(flightNum) FROM ticket WHERE flightNum = %s GROUP BY flightNum'
