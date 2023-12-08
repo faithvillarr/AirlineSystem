@@ -21,7 +21,32 @@
         </style>
     </header>
 <body>
-    <h1>You made it!</h1>
+    Flight #: {{ flight ['flightNum']}} <br>
+    Departing Airport: {{ flight ['deptAirportCode']}} <br>
+    Departure Date: {{ flight ['deptDate']}} <br>
+    Departure Time: {{ flight ['deptTime']}} <br>
+    Arrival Airport: {{ flight ['arrAirportCode']}} <br>
+    Arrival Date: {{ flight ['arrDate']}} <br>
+    Arrival Time: {{ flight ['arrTime']}} <br>
+    Departure Date: {{ flight ['deptDate']}} <br>
+    Base Ticket Price: {{ flight ['baseTicketPrice']}} <br>
+    Status: {{ flight ['fstatus']}} <br>
+
+    <h3>Average Rating: {{ avg_rating }}</h3>
+
+
+    <table id = 'freq-flyers'>
+        <th>Review</th>
+        <th>Comment</th>
+    {% for review in reviews %}
+    <tr>
+        <td>{{ review['rating'] }}</td>
+        <td>{{ review['comments'] }}</td>
+    </tr>
+    {% endfor%}
+    </table>
+
+    
     <a href="/">Go back</a>
 </body>
 </html>

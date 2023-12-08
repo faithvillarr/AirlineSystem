@@ -100,8 +100,7 @@
         <aside>
         <div id = 'user-spending'>
             <h3>Total Spending in 2023</h3>
-            ${{totalspent['sum(pricePaid)']}}
-            
+            ${{ totalspent }}
         </div>
         <div id = 'user options'>
             <a href="/userinfo">User Information</a>
@@ -131,8 +130,24 @@
     <div id = "freq-flyers">
         <!-- Need  -->
         <h2>Frequent Flyers</h2>
-        
+        <table id = 'freq-flyers'>
+            <th>Name #</th>
+            <th>Email</th>
+        {% for flyers in freq_flyers %}
+        <tr>
+            <td>{{ flyers['firstName'] }} {{ flyers['lastName'] }}</td>
+            <td>{{ flyers['num_flights'] }}</td>
+            <td> 
+                <form action="/flyersflights" method="POST">
+                    <input type="hidden" name="custname" value="{{ flyers['firstName'] }} {{ flyers['lastName'] }}">
+                    <input type="hidden" name="email" value="{{flyers['emailAdd']}}">
+                    <input type="submit" value="View Flights">
+                </form>
+            </td>
 
+        </tr>
+        {% endfor%}
+        </table>
     </div>
     <!--Total Revenue-->
     <div id = "total-rec">

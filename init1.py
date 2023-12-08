@@ -209,7 +209,7 @@ def registerAStaff():
         
         session['username'] = username
         session['usertype'] = 'staff'
-        return render_template('home.html')  # You may want to redirect to a different page for staff members
+        return redirect(url_for('home')) # You may want to redirect to a different page for staff members
 
 #! My app routes!!
 @app.route('/searchflight', methods=['GET','POST'])
@@ -269,9 +269,24 @@ def flightDetails(): # <input type="hidden" name="flight_num" value="{{ flight['
 	query = 'SELECT * FROM flights WHERE flightNum = %s'
 	cursor.execute(query, (flight_number,))
 	myflight = cursor.fetchone()
-	print("My Flight: ",myflight)
-	cursor.close();
-	return render_template('flightdetails.html', flight = myflight) #, username = username), usertype = usertype)
+	print("My Flight: ", myflight)
+
+	#get ratings and comments
+	get_ratg_comm = 'SELECT rating, comments from took WHERE took.flightNum = %s;' 
+	cursor.execute(get_ratg_comm, flight_number)
+	ratg_comm = cursor.fetchall()
+	print(ratg_comm)
+
+	#get average rating
+	get_avg_ratg = 'SELECT AVG(rating) AS avg_rating FROM took WHERE flightNum = %s;'
+	cursor.execute(get_avg_ratg, flight_number)
+	avg_rating = cursor.fetchone()
+	if(get_avg_ratg != None):
+		avg_rating = avg_rating['avg_rating']
+	else: 
+		avg_rating = 'No ratings'
+	
+	return render_template('flightdetails.html', flight = myflight, avg_rating = avg_rating, reviews = ratg_comm) #, username = username), usertype = usertype)
 
 @app.route('/home')
 def home():
@@ -296,7 +311,8 @@ def home():
 		cursor.execute(spendingquery, (username))
 		totalspent = cursor.fetchone();
 		cursor.close()
-		if(totalspent):
+		if(totalspent != None):
+			totalspent = totalspent['sum(pricePaid)']
 			return render_template('home.html', pastflights = pastflights, upcflights = upcflights, totalspent = totalspent)
 		else:
 			totalspent = 0;
@@ -312,7 +328,6 @@ def home():
 		cursor.execute(airlineq, session['username'])
 		airlineName = cursor.fetchone()['airlineName']
 
-
 		spendingquery = '''SELECT name, SUM(purchased.pricePaid) FROM uses 
 			join tforf on uses.flightNum = tforf.flightNum
 			join purchased on purchased.ticketID = tforf.ticketID
@@ -324,7 +339,27 @@ def home():
 		if(total_revenue):
 			total_revenue = total_revenue['SUM(purchased.pricePaid)']
 			print(total_revenue)
-		return render_template('home.html', total_revenue = total_revenue)
+
+		# get frequent flyers
+		flyers_query = '''
+			SELECT c.emailAdd, c.firstName, c.lastName, COUNT(*) AS num_flights
+			FROM customer c 
+			JOIN ticket t ON c.emailAdd = t.emailAdd
+			JOIN flights f ON t.flightNum = f.flightNum
+			JOIN uses u ON f.flightNum = u.flightNum AND f.deptDate = u.deptDate AND f.deptTime = u.deptTime
+			WHERE u.NAME = %s
+			and DATEDIFF(CURDATE(), f.deptDate) <= 365
+			GROUP BY c.emailAdd, c.firstName, c.lastName
+			HAVING COUNT(*) > 1;
+			'''
+		cursor.execute(flyers_query, (airlineName))
+		freq_flyers = cursor.fetchall()
+
+
+		print("freq_flyers: ",freq_flyers)
+
+		
+		return render_template('home.html', total_revenue = total_revenue, freq_flyers = freq_flyers)
 
 			
 	return render_template('home.html')#, posts=data1)
@@ -770,6 +805,34 @@ def cancelFlight():
 	conn.commit()
 	
 	return redirect(url_for('home'))
+
+@app.route('/flyersflights', methods = ['POST'])
+def showFreqFlyersFlights():
+	cursor = conn.cursor()
+	#grab airline name
+	airlineq = "SELECT airlineName FROM worksfor where userName = %s;"
+	cursor.execute(airlineq, session['username'])
+	airlineName = cursor.fetchone()['airlineName']
+	print("airlineName: ", airlineName)
+	# get flights of given freq flyer
+	flyers_flights = '''SELECT f.flightNum
+		FROM customer c 
+		JOIN ticket t ON c.emailAdd = t.emailAdd
+		JOIN flights f ON t.flightNum = f.flightNum
+		JOIN uses u ON f.flightNum = u.flightNum AND f.deptDate = u.deptDate AND f.deptTime = u.deptTime
+		WHERE u.NAME = %s and c.emailAdd = %s
+		GROUP BY f.flightNum;
+		'''
+	emailAdd = request.form['email']
+	custname = request.form['name']
+	print("name:", custname)
+
+	print("emailAdd: ", emailAdd)
+	cursor.execute(flyers_flights, (airlineName, emailAdd))
+	flights = cursor.fetchall()
+	print(flights)
+	return render_template('flyer-flights.html', name = custname, flights = flights, email = emailAdd)
+	
 
 		
 app.secret_key = 'some key that you will never guess'
