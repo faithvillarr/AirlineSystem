@@ -20,24 +20,30 @@ conn = pymysql.connect(host='localhost',
 #Define a route to hello function
 @app.route('/') # root irl
 def hello():
-    cursor = conn.cursor()
-    # executes query
-    if 'usertype' not in session:
-        session['usertype'] = 'null'
-    print("Usertype: ",session['usertype'])
-    query = 'SELECT * FROM `flights` WHERE deptDate >= CURRENT_DATE ORDER BY deptDate ASC'
-    cursor.execute(query)
+	cursor = conn.cursor()
+	# executes query
+	if 'usertype' not in session:
+		session['usertype'] = 'null'
+	print("Usertype: ",session['usertype'])
+	if(session['usertype'] == 'staff'):
+		query = '''SELECT * FROM `flights` WHERE deptDate 
+			BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY)
+			ORDER BY deptDate ASC;
+			'''
+	else:
+		query = 'SELECT * FROM `flights` WHERE deptDate >= CURRENT_DATE ORDER BY deptDate ASC'
+	cursor.execute(query)
 
-    # stores the results in a variable
-    data2 = cursor.fetchall()
+	# stores the results in a variable
+	data2 = cursor.fetchall()
 
-    for each in data2:
-        print(each['flightNum'])
-    
-    cursor.close()
-    error = None
+	for each in data2:
+		print(each['flightNum'])
 
-    return render_template('index.html', deptflights = data2, trip_type = 'oneway')
+	cursor.close()
+	error = None
+
+	return render_template('index.html', deptflights = data2, trip_type = 'oneway')
 
 #Define route for login
 @app.route('/login') #login irl
@@ -110,7 +116,7 @@ def loginAuthStaff():
 		#session is a built in
 		session['username'] = username
 		session['usertype'] = 'staff'
-		return render_template('home.html')
+		return redirect(url_for('home'))
 	else:
 		#returns an error message to the html page
 		error = 'Invalid login or username'
@@ -302,13 +308,23 @@ def home():
 	if(session['usertype'] == 'staff'):
 		#Get total revenue
 		cursor = conn.cursor()
-		query = 'SELECT w.airlineName FROM worksFor w WHERE w.userName = %s'
-		cursor.execute(query, session['username'])
-		airline = cursor.fetchone()['airlineName'];
-		print(airline)
-		query = 'SELECT SUM(p.pricePaid) AS total_revenue FROM purchased p JOIN ticket t ON p.ticketID = t.ticketID JOIN flights f ON t.flightNum = f.flightNum WHERE f.airline = %s'
-		#total_revenue = cursor.execute(query, airline)
-		#print(total_revenue)
+		airlineq = "SELECT airlineName FROM worksfor where userName = %s;"
+		cursor.execute(airlineq, session['username'])
+		airlineName = cursor.fetchone()['airlineName']
+
+
+		spendingquery = '''SELECT name, SUM(purchased.pricePaid) FROM uses 
+			join tforf on uses.flightNum = tforf.flightNum
+			join purchased on purchased.ticketID = tforf.ticketID
+			WHERE NAME = %s;
+			'''
+		cursor.execute(spendingquery, (airlineName))
+		total_revenue = cursor.fetchone();
+		print("total_revenue: ", total_revenue)
+		if(total_revenue):
+			total_revenue = total_revenue['SUM(purchased.pricePaid)']
+			print(total_revenue)
+		return render_template('home.html', total_revenue = total_revenue)
 
 			
 	return render_template('home.html')#, posts=data1)
@@ -448,7 +464,6 @@ def purchasing():
 	cardName = request.form['cardName']
 	cardNumber = request.form['cardNumber']
 	expirationDate = request.form['expirationDate']
-	#!TODO: Check card isn't 
 	expdatetemp = datetime.strptime(expirationDate, '%Y-%m-%d').date()
 	current_date = datetime.now().date()
 	if expdatetemp < current_date:
@@ -469,11 +484,12 @@ def purchasing():
 	cursor.execute(maxCapacityQ, (flightNum, deptDate, deptTime))
 	maxCapacity = cursor.fetchone()
 	print("maxCapacity: ", maxCapacity)
-	if (maxCapacity['numSeats']):
-		maxCapacity = maxCapacity['numSeats']
-		if (currCapacity >= 0.8*maxCapacity):
-			pricePaid *= 1.25
-			print("High Demand. Price is increased to", pricePaid)
+	if (maxCapacity):
+		if(maxCapacity['numSeats']):
+			maxCapacity = maxCapacity['numSeats']
+			if (currCapacity >= 0.8*maxCapacity):
+				pricePaid *= 1.25
+				print("High Demand. Price is increased to", pricePaid)
 
 	ins_ticket = 'INSERT INTO ticket VALUES(%s, %s, %s, %s, %s, %s)'
 	cursor.execute(ins_ticket, (ticketID, emailAdd, firstname, lastname, dob, flightNum))
